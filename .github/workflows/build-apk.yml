@@ -8,8 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -17,68 +18,63 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install web app dependencies
-        run: npm install
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install @capacitor/core@6.2.1 @capacitor/android@6.2.1
+          npm install -D @capacitor/cli@6.2.1
 
-      - name: Build web app (React -> dist/)
+      - name: Build web app
         run: npm run build
 
-      - name: Install Capacitor
-        run: |
-          npm install @capacitor/core @capacitor/android
-          npm install -D @capacitor/cli
-
-      - name: Add Android platform
+      - name: Add Android
         run: npx cap add android
 
-      - name: Copy Unity Ads Capacitor plugin into project
+      - name: Copy Unity Rewarded plugin
         run: |
           mkdir -p android/app/src/main/java/com/roxfollow/app
           cp native-integration/android-plugin/java/com/roxfollow/app/UnityRewardedAdsPlugin.java \
              android/app/src/main/java/com/roxfollow/app/UnityRewardedAdsPlugin.java
 
-      - name: Register plugin in MainActivity (full overwrite - reliable)
+      - name: Create MainActivity
         run: |
-          MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java")
-          PACKAGE_LINE=$(grep "^package" "$MAIN_ACTIVITY")
-          cat > "$MAIN_ACTIVITY" << MEOF
-          $PACKAGE_LINE
+          cat > android/app/src/main/java/com/roxfollow/app/MainActivity.java <<'JAVA'
+          package com.roxfollow.app;
 
           import android.os.Bundle;
           import com.getcapacitor.BridgeActivity;
 
           public class MainActivity extends BridgeActivity {
+
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(UnityRewardedAdsPlugin.class);
                   super.onCreate(savedInstanceState);
               }
           }
-          MEOF
-          echo "----- Final MainActivity.java -----"
-          cat "$MAIN_ACTIVITY"
+          JAVA
 
-      - name: Add Unity Ads SDK dependency
+      - name: Add Unity Ads SDK
         run: |
           sed -i '/dependencies {/a\    implementation "com.unity3d.ads:unity-ads:4.12.2"' android/app/build.gradle
 
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Set up JDK 21
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '21'
+          distribution: temurin
+          java-version: '17'
 
-      - name: Set up Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build Debug APK
+      - name: Build APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

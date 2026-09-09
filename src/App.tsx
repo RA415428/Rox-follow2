@@ -804,7 +804,6 @@ export function App() {
 
     // Instantly credit reward coins (+50 Coins) to user's wallet without opening any ad
     const coinsToEarn = adminConfig.ads?.coinsPerRewardAd || 50;
-    handleRewardEarned(coinsToEarn, true);
   };
 
   // Store screen "Watch Ad" button -> real Unity Rewarded Video ad (Android app only).
@@ -838,9 +837,7 @@ export function App() {
         handleShowToast('⚠️ Ad poora dekhne par hi coins milenge. Dobara try karein.');
       },
       onUnavailable: () => {
-        // Native Unity Ads bridge not present (e.g. running in a regular browser) -
-        // preserve previous behaviour so the web preview keeps working.
-        handleRewardEarned(coinsToEarn, true);
+        handleShowToast('⚠️ Unity Rewarded Ad sirf Android APK me available hai.');
       }
     });
   };
