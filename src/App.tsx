@@ -832,7 +832,7 @@ export function App() {
         handleShowToast('⚠️ Ad poora dekhne par hi coins milenge. Dobara try karein.');
       },
       onUnavailable: () => {
-        handleShowToast('⚠️ Unity Rewarded Ad sirf Android APK me available hai.');
+        handleShowToast('⚠️ Unity Rewarded Ad available nahi hai. Ad load hone ke baad dobara try karein.');
       }
     });
   };
