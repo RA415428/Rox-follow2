@@ -37,10 +37,26 @@ jobs:
           cp native-integration/android-plugin/java/com/roxfollow/app/UnityRewardedAdsPlugin.kt \
              android/app/src/main/java/com/roxfollow/app/UnityRewardedAdsPlugin.kt
 
-      - name: Register plugin in MainActivity
+      - name: Register plugin in MainActivity (full overwrite - reliable)
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java")
-          sed -i '/public void onCreate(Bundle savedInstanceState) {/a\    registerPlugin(UnityRewardedAdsPlugin.class);' "$MAIN_ACTIVITY"
+          PACKAGE_LINE=$(grep "^package" "$MAIN_ACTIVITY")
+          cat > "$MAIN_ACTIVITY" << MEOF
+          $PACKAGE_LINE
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(UnityRewardedAdsPlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          MEOF
+          echo "----- Final MainActivity.java -----"
+          cat "$MAIN_ACTIVITY"
 
       - name: Add Unity Ads SDK dependency
         run: |
@@ -49,7 +65,7 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
