@@ -819,15 +819,6 @@ export function App() {
       return;
     }
 
-    const now = Date.now();
-    const cooldownExpiryStr = localStorage.getItem('roxyefollow_watch_ad_cooldown');
-    const cooldownExpiry = cooldownExpiryStr ? parseInt(cooldownExpiryStr, 10) : 0;
-    if (cooldownExpiry && cooldownExpiry > now) {
-      const waitSec = Math.ceil((cooldownExpiry - now) / 1000);
-      handleShowToast(`⏳ Please wait ${waitSec}s before clicking again!`);
-      return;
-    }
-    localStorage.setItem('roxyefollow_watch_ad_cooldown', (now + 10000).toString());
 
     const coinsToEarn = adminConfig.ads?.coinsPerRewardAd || 50;
 
