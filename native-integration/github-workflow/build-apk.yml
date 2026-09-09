@@ -40,11 +40,11 @@ jobs:
       - name: Register plugin in MainActivity
         run: |
           MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java")
-          sed -i '/public void onCreate(Bundle savedInstanceState) {/a\    registerPlugin(UnityRewardedAdsPlugin.class);' "$MAIN_ACTIVITY"
+          sed -i '/public void onCreate(Bundle savedInstanceState)/a        registerPlugin(UnityRewardedAdsPlugin.class);' "$MAIN_ACTIVITY"
 
       - name: Add Unity Ads SDK dependency
         run: |
-          sed -i '/dependencies {/a\    implementation "com.unity3d.ads:unity-ads:4.12.2"' android/app/build.gradle
+          sed -i '/dependencies {/a    implementation "com.unity3d.ads:unity-ads:4.12.2"' android/app/build.gradle
 
       - name: Sync Capacitor
         run: npx cap sync android
