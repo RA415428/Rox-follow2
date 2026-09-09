@@ -5,7 +5,8 @@ interface UnityRewardedAdsPlugin {
   isAdReady(): Promise<{ ready: boolean }>;
 }
 
-const UnityRewardedAds = registerPlugin<UnityRewardedAdsPlugin>('UnityRewardedAds');
+const UnityRewardedAds =
+  registerPlugin<UnityRewardedAdsPlugin>('UnityRewardedAds');
 
 export const isNativeAdsAvailable = (): boolean => {
   try {
