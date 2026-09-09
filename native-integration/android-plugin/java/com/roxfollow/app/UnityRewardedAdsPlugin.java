@@ -8,6 +8,7 @@ import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+
 import com.unity3d.ads.IUnityAdsInitializationListener;
 import com.unity3d.ads.IUnityAdsLoadListener;
 import com.unity3d.ads.IUnityAdsShowListener;
@@ -16,14 +17,18 @@ import com.unity3d.ads.UnityAdsShowOptions;
 
 @CapacitorPlugin(name = "UnityRewardedAds")
 public class UnityRewardedAdsPlugin extends Plugin {
+
     private static final String TAG = "UnityRewardedAds";
+
     private static final String GAME_ID = "800368206";
     private static final String PLACEMENT_ID = "Rewarded_Android";
-    private static final boolean TEST_MODE = false;
+
+    // TEST MODE ON
+    private static final boolean TEST_MODE = true;
 
     private boolean initialized = false;
     private boolean loaded = false;
-    private PluginCall pendingCall;
+    private PluginCall pendingCall = null;
 
     @Override
     public void load() {
@@ -39,10 +44,11 @@ public class UnityRewardedAdsPlugin extends Plugin {
             GAME_ID,
             TEST_MODE,
             new IUnityAdsInitializationListener() {
+
                 @Override
                 public void onInitializationComplete() {
                     initialized = true;
-                    Log.d(TAG, "Unity Ads initialized");
+                    Log.d(TAG, "Unity Ads initialized - TEST MODE ON");
                     loadRewarded();
                 }
 
@@ -52,30 +58,59 @@ public class UnityRewardedAdsPlugin extends Plugin {
                     String message
                 ) {
                     initialized = false;
-                    Log.e(TAG, "Unity Ads initialization failed: " + message);
+                    Log.e(
+                        TAG,
+                        "Unity Ads initialization failed: "
+                        + error + " / " + message
+                    );
+
+                    resolve("INITIALIZATION_FAILED:" + message);
                 }
             }
         );
     }
 
     private void loadRewarded() {
-        UnityAds.load(PLACEMENT_ID, new IUnityAdsLoadListener() {
-            @Override
-            public void onUnityAdsAdLoaded(String placementId) {
-                loaded = true;
-                Log.d(TAG, "Rewarded ad loaded");
-            }
+        Log.d(TAG, "Loading Rewarded: " + PLACEMENT_ID);
 
-            @Override
-            public void onUnityAdsFailedToLoad(
-                String placementId,
-                UnityAds.UnityAdsLoadError error,
-                String message
-            ) {
-                loaded = false;
-                Log.e(TAG, "Rewarded load failed: " + message);
+        UnityAds.load(
+            PLACEMENT_ID,
+            new IUnityAdsLoadListener() {
+
+                @Override
+                public void onUnityAdsAdLoaded(String placementId) {
+                    loaded = true;
+
+                    Log.d(
+                        TAG,
+                        "Rewarded ad loaded: " + placementId
+                    );
+
+                    // If user already pressed Watch Ad,
+                    // show automatically after loading.
+                    if (pendingCall != null) {
+                        showLoadedRewarded();
+                    }
+                }
+
+                @Override
+                public void onUnityAdsFailedToLoad(
+                    String placementId,
+                    UnityAds.UnityAdsLoadError error,
+                    String message
+                ) {
+                    loaded = false;
+
+                    Log.e(
+                        TAG,
+                        "Rewarded load failed: "
+                        + error + " / " + message
+                    );
+
+                    resolve("LOAD_FAILED:" + error + ":" + message);
+                }
             }
-        });
+        );
     }
 
     @PluginMethod
@@ -87,56 +122,123 @@ public class UnityRewardedAdsPlugin extends Plugin {
 
     @PluginMethod
     public void showRewardedAd(PluginCall call) {
+
+        Log.d(
+            TAG,
+            "showRewardedAd called. initialized="
+            + initialized
+            + ", loaded="
+            + loaded
+        );
+
         if (!initialized) {
-            JSObject result = new JSObject();
-            result.put("status", "NOT_INITIALIZED");
-            call.resolve(result);
+            pendingCall = call;
+
+            Log.d(
+                TAG,
+                "Unity not initialized. Waiting for initialization."
+            );
+
             return;
         }
 
         if (!loaded) {
-            JSObject result = new JSObject();
-            result.put("status", "NOT_READY");
-            call.resolve(result);
+            pendingCall = call;
+
+            Log.d(
+                TAG,
+                "Rewarded not ready. Waiting for ad load."
+            );
+
             loadRewarded();
             return;
         }
 
         pendingCall = call;
+        showLoadedRewarded();
+    }
+
+    private void showLoadedRewarded() {
+
+        if (pendingCall == null) {
+            return;
+        }
+
+        if (!loaded) {
+            return;
+        }
+
         loaded = false;
+
+        Log.d(
+            TAG,
+            "Showing Unity Rewarded: " + PLACEMENT_ID
+        );
 
         UnityAds.show(
             getActivity(),
             PLACEMENT_ID,
             new UnityAdsShowOptions(),
+
             new IUnityAdsShowListener() {
+
                 @Override
                 public void onUnityAdsShowFailure(
                     String placementId,
                     UnityAds.UnityAdsShowError error,
                     String message
                 ) {
-                    Log.e(TAG, "Rewarded show failed: " + message);
-                    resolve("FAILED");
+                    Log.e(
+                        TAG,
+                        "Rewarded show failed: "
+                        + error + " / " + message
+                    );
+
+                    resolve(
+                        "SHOW_FAILED:"
+                        + error
+                        + ":"
+                        + message
+                    );
+
                     loadRewarded();
                 }
 
                 @Override
-                public void onUnityAdsShowStart(String placementId) {}
+                public void onUnityAdsShowStart(
+                    String placementId
+                ) {
+                    Log.d(TAG, "Rewarded show started");
+                }
 
                 @Override
-                public void onUnityAdsShowClick(String placementId) {}
+                public void onUnityAdsShowClick(
+                    String placementId
+                ) {
+                    Log.d(TAG, "Rewarded clicked");
+                }
 
                 @Override
                 public void onUnityAdsShowComplete(
                     String placementId,
                     UnityAds.UnityAdsShowCompletionState state
                 ) {
-                    if (state == UnityAds.UnityAdsShowCompletionState.COMPLETED) {
+
+                    Log.d(
+                        TAG,
+                        "Rewarded completed. State="
+                        + state
+                    );
+
+                    if (
+                        state
+                        == UnityAds.UnityAdsShowCompletionState.COMPLETED
+                    ) {
                         resolve("REWARDED");
                     } else {
                         resolve("SKIPPED");
                     }
+
                     loadRewarded();
                 }
             }
@@ -144,10 +246,14 @@ public class UnityRewardedAdsPlugin extends Plugin {
     }
 
     private void resolve(String status) {
-        if (pendingCall == null) return;
+
+        if (pendingCall == null) {
+            return;
+        }
 
         JSObject result = new JSObject();
         result.put("status", status);
+
         pendingCall.resolve(result);
         pendingCall = null;
     }
