@@ -24,7 +24,7 @@ public class UnityRewardedAdsPlugin extends Plugin {
     private static final String PLACEMENT_ID = "Rewarded_Android";
 
     // TEST MODE ON
-    private static final boolean TEST_MODE = true;
+    private static final boolean TEST_MODE = false;
 
     private boolean initialized = false;
     private boolean loaded = false;

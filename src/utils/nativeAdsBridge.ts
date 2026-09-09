@@ -1,12 +1,11 @@
-import { Capacitor, registerPlugin } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
 
-interface UnityRewardedAdsPlugin {
+interface UnityRewardedAdsPluginInterface {
   showRewardedAd(): Promise<{ status: string }>;
   isAdReady(): Promise<{ ready: boolean }>;
 }
 
-const UnityRewardedAds =
-  registerPlugin<UnityRewardedAdsPlugin>('UnityRewardedAds');
+const UnityRewardedAds = registerPlugin<UnityRewardedAdsPluginInterface>('UnityRewardedAds');
 
 export const isNativeAdsAvailable = (): boolean => {
   try {
@@ -27,20 +26,23 @@ export const showNativeRewardedAd = async ({
   onFailedOrCancelled,
   onUnavailable
 }: ShowRewardedAdCallbacks): Promise<void> => {
-  if (!Capacitor.isNativePlatform()) {
+  if (!isNativeAdsAvailable()) {
+    console.log('[UnityAds] Native platform not detected - web preview mode');
     onUnavailable();
     return;
   }
 
   try {
+    console.log('[UnityAds] Calling native showRewardedAd()...');
     const result = await UnityRewardedAds.showRewardedAd();
-
-    if (result?.status === 'REWARDED') {
+    console.log('[UnityAds] Native result:', JSON.stringify(result));
+    if (result && result.status === 'REWARDED') {
       onReward();
     } else {
       onFailedOrCancelled(result?.status || 'UNKNOWN');
     }
   } catch (err: any) {
+    console.error('[UnityAds] Native call error:', err);
     onFailedOrCancelled(err?.message || 'NATIVE_AD_ERROR');
   }
 };
