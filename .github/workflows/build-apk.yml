@@ -34,8 +34,8 @@ jobs:
       - name: Copy Unity Ads Capacitor plugin into project
         run: |
           mkdir -p android/app/src/main/java/com/roxfollow/app
-          cp native-integration/android-plugin/java/com/roxfollow/app/UnityRewardedAdsPlugin.kt \
-             android/app/src/main/java/com/roxfollow/app/UnityRewardedAdsPlugin.kt
+          cp native-integration/android-plugin/java/com/roxfollow/app/UnityRewardedAdsPlugin.java \
+             android/app/src/main/java/com/roxfollow/app/UnityRewardedAdsPlugin.java
 
       - name: Register plugin in MainActivity (full overwrite - reliable)
         run: |
