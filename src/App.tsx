@@ -805,7 +805,6 @@ export function App() {
     // Instantly credit reward coins (+50 Coins) to user's wallet without opening any ad
     const coinsToEarn = adminConfig.ads?.coinsPerRewardAd || 50;
 
-      if (!window.confirm("🎁 Watch Rewarded Ad\n\nAd poora dekhein aur coins earn karein?")) return;
   };
 
   // Store screen "Watch Ad" button -> real Unity Rewarded Video ad (Android app only).
@@ -822,7 +821,6 @@ export function App() {
 
     const coinsToEarn = adminConfig.ads?.coinsPerRewardAd || 50;
 
-      if (!window.confirm("🎁 Watch Rewarded Ad\n\nAd poora dekhein aur coins earn karein?")) return;
 
     showNativeRewardedAd({
       onReward: () => {

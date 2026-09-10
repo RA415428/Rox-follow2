@@ -20,7 +20,7 @@ public class UnityRewardedAdsPlugin extends Plugin {
 
     private static final String TAG = "UnityRewardedAds";
 
-    private static final String GAME_ID = "800368206";
+    private static final String GAME_ID = "800274636";
     private static final String PLACEMENT_ID = "Rewarded_Android";
 
     // TEST MODE ON
@@ -194,14 +194,16 @@ public class UnityRewardedAdsPlugin extends Plugin {
                         + error + " / " + message
                     );
 
-                    resolve(
-                        "SHOW_FAILED:"
-                        + error
-                        + ":"
-                        + message
-                    );
-
+                    final String status = "SHOW_FAILED:" + error + ":" + message;
+                    final PluginCall failedCall = pendingCall;
+                    pendingCall = null;
+                    loaded = false;
                     loadRewarded();
+                    if (failedCall != null) {
+                        JSObject result = new JSObject();
+                        result.put("status", status);
+                        failedCall.resolve(result);
+                    }
                 }
 
                 @Override
@@ -230,15 +232,27 @@ public class UnityRewardedAdsPlugin extends Plugin {
                         + state
                     );
 
+                    final PluginCall completeCall = pendingCall;
+                    pendingCall = null;
+
                     if (
                         state
                         == UnityAds.UnityAdsShowCompletionState.COMPLETED
                     ) {
-                        resolve("REWARDED");
+                        if (completeCall != null) {
+                            JSObject result = new JSObject();
+                            result.put("status", "REWARDED");
+                            completeCall.resolve(result);
+                        }
                     } else {
-                        resolve("SKIPPED");
+                        if (completeCall != null) {
+                            JSObject result = new JSObject();
+                            result.put("status", "SKIPPED");
+                            completeCall.resolve(result);
+                        }
                     }
 
+                    loaded = false;
                     loadRewarded();
                 }
             }
